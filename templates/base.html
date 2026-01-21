@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fluxo de Caixa{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Estilos completos para garantir que o Dropdown apareça corretamente */
+        
+        /* Garante que a barra de navegação permita que o menu "vaze" para fora dela */
+        .navbar {
+            overflow: visible !important;
+            z-index: 1001; /* Garante que a barra fique acima do conteúdo */
+        }
+
+        /* Estilo para o botão parecer um link do menu (remove estilo padrão de botão) */
+        .dropbtn {
+            background-color: transparent;
+            color: white; /* Herda a cor do texto da navbar */
+            padding: 14px 16px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute; /* Faz o menu flutuar sobre o conteúdo */
+            background-color: #f9f9f9; /* Cor de fundo para não ser transparente */
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); /* Sombra para destaque */
+            z-index: 1000; /* Garante que fique na frente de gráficos e cards */
+            top: 100%; /* Posiciona logo abaixo do botão */
+            left: 0;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {background-color: #f1f1f1;}
+
+        .dropdown-content.show {
+            display: block;
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Menu de Navegação (Centralizado) -->
+        <div class="navbar">
+            <a href="{{ url_for('home') }}">Home</a>
+            
+            <div class="dropdown">
+                <button class="dropbtn">Financeiro &#9662;</button>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('contas_a_pagar') }}">Contas a Pagar</a>
+                    <a href="{{ url_for('relatorios_contas') }}">Relatórios Contas</a>
+                </div>
+            </div> 
+            
+            <a href="{{ url_for('relatorios') }}">Relatórios</a>
+        </div>
+
+        <!-- Área onde o conteúdo das outras páginas será inserido -->
+        {% block content %}
+        {% endblock %}
+
+    </div>
+
+    {% block scripts %}
+    {% endblock %}
+
+    <script>
+        // Script para controlar a abertura do menu dropdown no clique
+        document.addEventListener('DOMContentLoaded', function() {
+            var dropBtn = document.querySelector('.dropbtn');
+            var dropContent = document.querySelector('.dropdown-content');
+
+            if (dropBtn && dropContent) {
+                dropBtn.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Impede que o clique feche o menu imediatamente
+                    dropContent.classList.toggle('show');
+                });
+
+                // Fecha o menu se o usuário clicar fora dele
+                window.addEventListener('click', function(event) {
+                    if (!event.target.matches('.dropbtn')) {
+                        if (dropContent.classList.contains('show')) {
+                            dropContent.classList.remove('show');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="header">
+            <h1>Relatórios</h1>
+        </div>
+
+        <!-- Filtros -->
+        <form action="/relatorios" method="GET" class="filter-form">
+            <div class="row">
+                <select name="tipo">
+                    <option value="">Todos os Tipos</option>
+                    <option value="entrada" {% if filtro_tipo == 'entrada' %}selected{% endif %}>Entradas</option>
+                    <option value="saida" {% if filtro_tipo == 'saida' %}selected{% endif %}>Saídas</option>
+                </select>
+                <input type="month" name="mes" value="{{ filtro_mes }}">
+                <div style="flex: 0 0 auto; display: flex; gap: 10px;">
+                    <button type="submit" style="width: auto;">Filtrar</button>
+                    <button type="submit" formaction="{{ url_for('exportar') }}" class="btn-secondary" style="background-color: #27ae60; height: 100%; width: auto; border: none; cursor: pointer;">Exportar XLS</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Resumo do Filtro -->
+        <div class="dashboard">
+            <div class="card entrada">
+                <h3>Total Entradas</h3>
+                <p>R$ {{ "%.2f"|format(entrada) }}</p>
+            </div>
+            <div class="card saida">
+                <h3>Total Saídas</h3>
+                <p>R$ {{ "%.2f"|format(saidas) }}</p>
+            </div>
+            <div class="card saldo">
+                <h3>Resultado</h3>
+                <p>R$ {{ "%.2f"|format(saldo) }}</p>
+            </div>
+        </div>
+
+        <!-- Gráfico de Barras (Entradas vs Saídas) -->
+        {% if barras_labels %}
+        <div class="chart-container">
+            <canvas id="barrasChart"></canvas>
+        </div>
+        {% endif %}
+
+        <!-- Gráfico de Despesas -->
+        {% if gastos_por_categoria %}
+        <div class="chart-container">
+            <canvas id="gastosChart"></canvas>
+        </div>
+        {% endif %}
+
+        <!-- Lista de Resultados -->
+        <div class="lista">
+            {% for t in transacoes %}
+            <div class="transacao-item {{ t.tipo }}">
+                <div class="data-box">{{ t.data }}</div>
+                <div class="detalhes">
+                    <strong>{{ t.categoria }}</strong>
+                    <span>{{ t.descricao }}</span>
+                </div>
+                <div class="valor">R$ {{ "%.2f"|format(t.valor) }}</div>
+            </div>
+            {% else %}
+            <div class="empty-state">Nenhum registro encontrado para este filtro.</div>
+            {% endfor %}
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Gráfico de Barras
+        const barrasLabels = {{ barras_labels | tojson }};
+        const barrasEntradas = {{ barras_entradas | tojson }};
+        const barrasSaidas = {{ barras_saidas | tojson }};
+
+        if (barrasLabels && barrasLabels.length > 0) {
+            const ctxBar = document.getElementById('barrasChart');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: barrasLabels,
+                    datasets: [
+                        { label: 'Entradas', data: barrasEntradas, backgroundColor: '#27ae60' },
+                        { label: 'Saídas', data: barrasSaidas, backgroundColor: '#c0392b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Entradas vs Saídas por Mês' }
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Gráfico de Pizza (Existente)
+        const dadosGastos = {{ gastos_por_categoria | tojson }};
+        
+        if (Object.keys(dadosGastos).length > 0) {
+            const ctx = document.getElementById('gastosChart');
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(dadosGastos),
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: Object.values(dadosGastos),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: { display: true, text: 'Distribuição de Despesas por Categoria' }
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

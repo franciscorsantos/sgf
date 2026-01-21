@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Fluxo de Caixa - Home{% endblock %}
+
+{% block content %}
+        <div class="header">
+            <h1>Fluxo de Caixa</h1>
+        </div>
+
+        <!-- Dashboard (Resumo) -->
+        <div class="dashboard">
+            <div class="card entrada">
+                <h3>Entradas</h3>
+                <p>R$ {{ "%.2f"|format(entrada) }}</p>
+            </div>
+            <div class="card saida">
+                <h3>Saídas</h3>
+                <p>R$ {{ "%.2f"|format(saidas) }}</p>
+            </div>
+            <div class="card saldo">
+                <h3>Saldo</h3>
+                <p>R$ {{ "%.2f"|format(saldo) }}</p>
+            </div>
+        </div>
+
+        <!-- Formulário de Nova Transação -->
+        <div class="card" style="margin-bottom: 20px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Nova Transação</h2>
+                <a href="{{ url_for('contas_a_pagar') }}" style="color: #3498db; text-decoration: none; font-weight: bold; font-size: 0.9em;">Agendar Conta a Pagar &rarr;</a>
+            </div>
+            <form action="{{ url_for('home') }}" method="POST" style="display: grid; gap: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label for="data">Data</label>
+                        <!-- Mantendo type="text" para compatibilidade com o formato DD-MM-YYYY usado no backend -->
+                        <input type="text" id="data" name="data" value="{{ hoje }}" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="tipo">Tipo</label>
+                        <select id="tipo" name="tipo" required onchange="atualizarCategorias()" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                            <option value="entrada">Entrada</option>
+                            <option value="saida" selected>Saída</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+                        <!-- Preenchido via JavaScript -->
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
+                    <div>
+                        <label for="valor">Valor (R$)</label>
+                        <input type="number" id="valor" name="valor" step="0.01" required placeholder="0.00" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="descricao">Descrição</label>
+                        <input type="text" id="descricao" name="descricao" placeholder="Ex: Combustível, Frete..." style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <button type="submit" style="padding: 10px; background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold;">Adicionar Transação</button>
+            </form>
+        </div>
+
+        <!-- Lista de Últimas Transações -->
+        <div class="lista">
+            <h2>Últimas Transações</h2>
+            {% for t in transacoes %}
+            <div class="transacao-item {{ t.tipo }}">
+                <div class="data-box">{{ t.data }}</div>
+                <div class="detalhes">
+                    <strong>{{ t.categoria }}</strong>
+                    <span>{{ t.descricao }}</span>
+                </div>
+                <div class="valor">R$ {{ "%.2f"|format(t.valor) }}</div>
+                <a href="{{ url_for('deletar_transacao', id=t.id) }}" class="btn-delete" onclick="return confirm('Tem certeza que deseja excluir esta transação?')" title="Excluir">
+                    &times;
+                </a>
+            </div>
+            {% else %}
+            <div class="empty-state" style="text-align: center; padding: 20px; color: #777;">
+                Nenhuma transação registrada ainda.
+            </div>
+            {% endfor %}
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Recebe as categorias do Python (api/index.py)
+        const categorias = {{ categorias | tojson }};
+
+        function atualizarCategorias() {
+            const tipo = document.getElementById('tipo').value;
+            const selectCategoria = document.getElementById('categoria');
+            
+            // Limpa opções atuais
+            selectCategoria.innerHTML = '';
+
+            // Adiciona novas opções baseadas no tipo selecionado
+            if (categorias[tipo]) {
+                categorias[tipo].forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    selectCategoria.appendChild(option);
+                });
+            }
+        }
+
+        // Inicializa as categorias ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            atualizarCategorias();
+        });
+    </script>
+{% endblock %}

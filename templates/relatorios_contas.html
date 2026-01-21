@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Fluxo de Caixa - Relatório de Contas{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <h1>Relatório de Contas a Pagar</h1>
+    </div>
+
+    <!-- Filtros -->
+    <form action="/relatorios-contas" method="GET" style="margin-bottom: 30px;">
+        <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="mes">Mês de Vencimento</label>
+                <input type="month" id="mes" name="mes" value="{{ filtro_mes or '' }}" style="margin-bottom: 0;">
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="status">Status</label>
+                <select id="status" name="status" style="margin-bottom: 0;">
+                    <option value="">Todos</option>
+                    <option value="pendente" {% if filtro_status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="pago" {% if filtro_status == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
+            </div>
+            <div style="flex: 0 0 auto; display: flex; gap: 10px;">
+                <button type="submit" style="width: auto; margin-bottom: 0; padding: 10px 20px;">Filtrar</button>
+                <a href="/relatorios-contas" class="btn-secondary" style="display: flex; align-items: center; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; color: white; background-color: #95a5a6;">Limpar</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Resumo (Cards) -->
+    <div class="dashboard">
+        <div class="card" style="border-left: 4px solid #f39c12;">
+            <h3>Total Pendente</h3>
+            <p style="color: #f39c12;">R$ {{ "%.2f"|format(total_pendente) }}</p>
+        </div>
+        <div class="card" style="border-left: 4px solid #27ae60;">
+            <h3>Total Pago</h3>
+            <p style="color: #27ae60;">R$ {{ "%.2f"|format(total_pago) }}</p>
+        </div>
+    </div>
+
+    <!-- Botão Exportar -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <a href="{{ url_for('exportar_contas', mes=filtro_mes, status=filtro_status) }}" style="background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
+            <span>Exportar para Excel</span>
+        </a>
+    </div>
+
+    <!-- Lista -->
+    <div class="lista">
+        <h2>Contas</h2>
+        {% for conta in contas %}
+        <div class="transacao-item" style="border-left: 4px solid {% if conta.status == 'pago' %}#27ae60{% else %}#f39c12{% endif %};">
+            <div class="data-box">{{ conta.data_vencimento }}</div>
+            <div class="detalhes">
+                <strong>{{ conta.categoria }}</strong>
+                <span>{{ conta.descricao }}</span>
+            </div>
+            <div style="margin-right: 20px; font-weight: bold; color: {% if conta.status == 'pago' %}#27ae60{% else %}#f39c12{% endif %};">
+                {% if conta.status == 'pago' %}PAGO{% else %}PENDENTE{% endif %}
+            </div>
+            <div class="valor">R$ {{ "%.2f"|format(conta.valor) }}</div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            Nenhuma conta encontrada para os filtros selecionados.
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
